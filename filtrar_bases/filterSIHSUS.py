@@ -1,7 +1,10 @@
+# Filtra a base de dados do SIHSUS do brasil e extrai o dados de SJDR relacionados a internções dos CIDs estudados
 import pandas as pd
 import zipfile
+from pathlib import Path
 
-caminho_zip = r"C:\Users\lucas\OneDrive\Área de Trabalho\Faculdade\IC\ETLSIH.zip"
+diretorioAtual = Path(__file__).parent
+caminhoZip = diretorioAtual.parent / 'ETLSIH.zip'
 
 cid_ma_alimentacao = [
     'D50', 'D51', 'D52', 'D53',  
@@ -16,7 +19,7 @@ codigo_municipio = 316250
 
 dados_filtrados = []
 
-with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
+with zipfile.ZipFile(caminhoZip, 'r') as zip_ref:
     nomes_arquivos = [f for f in zip_ref.namelist()
                       if f.startswith("ETLSIH.ST_MG_") and f.endswith(".csv")]
     
@@ -69,7 +72,15 @@ if dados_filtrados:
     }
     df_final.rename(columns=renomear, inplace=True)
 
+    # --- Criar coluna de faixa etária com labels A, B, C, D, E ---
+    bins = [-1, 14, 24, 44, 64, 200]   # limites
+    labels = ['A', 'B', 'C', 'D', 'E']
+    df_final['Faixa_Etaria'] = pd.cut(df_final['Idade'], bins=bins, labels=labels)
+
+
+    # Salvar no CSV
     df_final.to_csv('dados_sjdr_ma_alimentacao.csv', sep=';', encoding='utf-8-sig', index=False)
     print(f"\n SUCESSO! Arquivo salvo: dados_sjdr_ma_alimentacao.csv com {len(df_final)} registros.")
+
 else:
     print("\n Nenhum registro encontrado após os filtros aplicados.")
