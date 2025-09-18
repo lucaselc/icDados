@@ -3,11 +3,10 @@ from streamlit_echarts import st_echarts
 from pathlib import Path
 import pandas as pd
 
-def CriarOpcoesGrafico(titulo, nome, data, tipoGrafico):
-    options = {} # Inicializa a variável
+# Função para criar os dicionários de opções para cada gráfico
 
-    # Gráfico de Donut (Rosca)
-    # data: [{'value': 1048, 'name': 'Search Engine'}, ...]
+def CriarOpcoesGrafico(titulo, nome, data, tipoGrafico):
+    options = {}
     if tipoGrafico == 'Donut':
         options = {
             "title": {"text": titulo, "left": "center"},
@@ -31,49 +30,6 @@ def CriarOpcoesGrafico(titulo, nome, data, tipoGrafico):
                 "data": data
             }]
         }
-        
-    # Gráfico de Pizza
-    # data: [{'value': 1048, 'name': 'Search Engine'}, ...]
-    elif tipoGrafico == 'Pizza':
-        options = {
-            "title": {"text": titulo, "left": "center"},
-            "tooltip": {"trigger": "item", "formatter": "<b>{a} <br/>{b}: {c} ({d}%)</b>"},
-            "legend": {"top": "5%", "left": "center"},
-            "series": [{
-                "name": nome,
-                "type": "pie",
-                "radius": "50%",
-                "data": data,
-                "emphasis": {
-                    "itemStyle": {
-                        "shadowBlur": 10,
-                        "shadowOffsetX": 0,
-                        "shadowColor": "rgba(0, 0, 0, 0.5)",
-                    }
-                },
-            }],
-        }
-
-    # Gráfico de Barras Verticais
-    # data: [ ['Mon', 'Tue', ...], [120, 200, ...] ] -> [categorias, valores]
-    elif tipoGrafico == 'Barra':
-        options = {
-            "title": {"text": titulo, "left": "center"},
-            "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
-            "legend": {"top": "5%", "left": "center"},
-            "xAxis": {"type": "category", "data": data[0]},
-            "yAxis": {"type": "value"},
-            "series": [{
-                "name": nome,
-                "data": data[1],
-                "type": "bar"
-            }],
-        }
-        
-    # --- GRÁFICOS ADICIONADOS ---
-
-    # Gráfico de Linhas
-    # data: [ ['Mon', 'Tue', ...], [120, 200, ...] ] -> [categorias, valores]
     elif tipoGrafico == 'Linha':
         options = {
             "title": {"text": titulo, "left": "center"},
@@ -85,166 +41,186 @@ def CriarOpcoesGrafico(titulo, nome, data, tipoGrafico):
                 "name": nome,
                 "data": data[1],
                 "type": "line",
-                "smooth": True # Deixa a linha mais suave
+                "smooth": True
             }],
         }
-        
-    # Gráfico de Barras Horizontais
-    # data: [ ['Mon', 'Tue', ...], [120, 200, ...] ] -> [categorias, valores]
-    elif tipoGrafico == 'BarraHorizontal':
+
+
+    elif tipoGrafico == 'Linhas':
         options = {
             "title": {"text": titulo, "left": "center"},
-            "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
-            "legend": {"top": "5%", "left": "center"},
-            "xAxis": {"type": "value"},
-            "yAxis": {"type": "category", "data": data[0]},
-            "series": [{
-                "name": nome,
-                "data": data[1],
-                "type": "bar"
-            }],
+            "tooltip": {"trigger": "axis"},
+            "legend": {"top": "5%", "left": "center", "type": "scroll"}, 
+            "xAxis": {"type": "category", "boundaryGap": False, "data": data['categorias']}, 
+            "yAxis": {"type": "value"},
+            "series": data['series'], 
         }
-
-    # Gráfico de Boxplot
-    # data: [ [655, 850, ...], [700, 830, ...] ] -> lista de listas com os dados de cada categoria
-    elif tipoGrafico == 'Boxplot':
-        options = {
-            "title": [{"text": titulo, "left": "center"}],
-            "dataset": [{
-                "source": data
-                },
-                {
-                "transform": {
-                    "type": "boxplot",
-                    "config": {"itemNameFormatter": ""},
-                    }
-                },
-                {"fromDatasetIndex": 1, "fromTransformResult": 1},
-                ],
-            "tooltip": {"trigger": "item", "axisPointer": {"type": "shadow"}},
-            "grid": {"left": "10%", "right": "10%", "bottom": "15%"},
-            "xAxis": {
-                "type": "category",
-                "boundaryGap": True,
-                "nameGap": 30,
-                "splitArea": {"show": False},
-                "splitLine": {"show": False},
-                },
-            "yAxis": {
-                "type": "value",
-                "name": nome,
-                "splitArea": {"show": True},
-                },
-            "series": [
-                {"name": "boxplot", "type": "boxplot", "datasetIndex": 1},
-                {"name": "outlier", "type": "scatter", "datasetIndex": 2},
-                ],
-            }
-
     return options
 
 
-def GraficoCustoAnual(df, configuracoes):
-    """
-    Cria um gráfico de linhas mostrando a evolução do custo total das internações por ano.
-    """
-    def filtraDados(df_interno):
-        # Agrupa os dados por ano e soma os gastos
-        custo_anual = df_interno.groupby('Ano_Competencia')['Valor_Gasto'].sum().round(2)
-        
-        # Formata os dados para o gráfico de linha: [[anos], [valores]]
-        anos = custo_anual.index.tolist()
-        valores = custo_anual.values.tolist()
-        
-        return [anos, valores]
-
+def GraficoCustoAnual(df, configuracoes, anosSelecionados):
     st.header("Custo Anual com Internações por Má Nutrição")
-    
-    titulo = "Evolução do Custo Total em São João del-Rei"
-    nome_serie = "Custo Total (R$)"
-    dados_grafico = filtraDados(df)
-    tipo_grafico = 'Linha' # Usando o tipo de gráfico que criamos anteriormente
-    
-    # Exibe o gráfico usando a função principal
-    st_echarts(options=CriarOpcoesGrafico(titulo, nome_serie, dados_grafico, tipo_grafico), height=configuracoes[1])
+
+    if anosSelecionados:
+        df = df[df["Ano_Competencia"].isin(anosSelecionados)]
+
+    custoAnual = df.groupby('Ano_Competencia')['Valor_Gasto'].sum().round(2)
+    dadosGrafico = [custoAnual.index.tolist(), custoAnual.values.tolist()]
+
+    st_echarts(
+        options=CriarOpcoesGrafico("Evolução do Custo Total", "Custo Total (R$)", dadosGrafico, 'Linha'),
+        height=configuracoes[1]
+    )
 
 
 def GraficoFaixaEtaria(df, configuracoes):
-    """
-    Cria um gráfico de Donut mostrando a distribuição das internações por faixa etária.
-    """
-    def filtraDados(df_interno):
-        # Mapeamento das letras para labels descritivos
-        mapa_faixas = {
-            'A': '0-14 anos',
-            'B': '15-29 anos',
-            'C': '30-44 anos',
-            'D': '45-59 anos',
-            'E': '60+ anos'
-        }
-        
-        # Conta o número de ocorrências de cada faixa etária
-        contagem_faixas = df_interno['Faixa_Etaria'].value_counts()
-        
-        # Formata os dados para o gráfico de Donut: [{'value': x, 'name': 'y'}, ...]
-        dados_formatados = []
-        for faixa, contagem in contagem_faixas.items():
-            nome_faixa = mapa_faixas.get(faixa, "Não especificada") # Usa o mapa para obter o nome
-            dados_formatados.append({"value": contagem, "name": nome_faixa})
-            
-        return dados_formatados
-
     st.header("Distribuição de Internações por Faixa Etária")
+
+    mapaFaixas = {
+        'A': '0-14 anos',
+        'B': '15-29 anos',
+        'C': '30-44 anos',
+        'D': '45-59 anos',
+        'E': '60+ anos'
+    }
     
-    titulo = "Internações por Faixa Etária em São João del-Rei"
-    nome_serie = "Nº de Internações"
-    dados_grafico = filtraDados(df)
-    tipo_grafico = 'Donut' # Usando o gráfico de Donut como no seu exemplo
-    
-    # Exibe o gráfico
-    st_echarts(options=CriarOpcoesGrafico(titulo, nome_serie, dados_grafico, tipo_grafico), height=configuracoes[1])
+    contagem_faixas = df['Faixa_Etaria'].value_counts()
+    dadosGrafico = [{"value": v, "name": mapaFaixas.get(k, "Não especificada")} for k, v in contagem_faixas.items()]
 
-
-
-
-def main():
-    try:
-        diretorioAtual = Path(__file__).parent
-        caminhoArquivo = diretorioAtual / 'database' / 'sihsusSJDR.csv'
-        dfsihsusSJDR = pd.read_csv(caminhoArquivo, sep=';')
-        
-        dfsihsusSJDR['Valor_Gasto'] = dfsihsusSJDR['Valor_Gasto'].astype(str).str.replace(',', '.').astype(float)
-    
-    except FileNotFoundError:
-        st.error("Erro: O arquivo de dados não foi encontrado")
-        st.stop() 
-
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar ou processar os dados: {e}")
-        st.stop()
-
-    st.set_page_config(
-        page_title="Dados - SJDR",
-        page_icon="🏥",
-        initial_sidebar_state="expanded",
-        layout="wide",
+    st_echarts(
+        options=CriarOpcoesGrafico("Internações por Faixa Etária", "Nº de Internações", dadosGrafico, 'Donut'),
+        height=configuracoes[1]
     )
 
+
+def GraficoRaca(df, configuracoes):
+    st.header("Distribuição de Internações por Raça/Cor")
+
+    contagemRaca = df['Raca_Cor_Label'].value_counts()
+    dadosGrafico = [{"value": v, "name": k} for k, v in contagemRaca.items()]
+
+    st_echarts(
+        options=CriarOpcoesGrafico("Internações por Raça/Cor", "Nº de Internações", dadosGrafico, 'Donut'),
+        height=configuracoes[1]
+    )
+
+def GraficoTendenciaPorFaixaEtaria(df, configuracoes, anosSelecionados):
+    st.header("Tendência de Internações por Faixa Etária ao Longo do Tempo")
+
+    if anosSelecionados:
+        df = df[df["Ano_Competencia"].isin(anosSelecionados)]
+
+    mapaFaixas = {
+        'A': '0-14 anos', 'B': '15-29 anos', 'C': '30-44 anos',
+        'D': '45-59 anos', 'E': '60+ anos'
+    }
+    df['Faixa_Etaria_Label'] = df['Faixa_Etaria'].map(mapaFaixas)
+
+    # Agrupa por ano e faixa etária e conta as ocorrências
+    contagemAnualFaixa = df.groupby(['Ano_Competencia', 'Faixa_Etaria_Label']).size().reset_index(name='contagem')
+
+    # Pivota a tabela
+    dfPivot = contagemAnualFaixa.pivot(
+        index='Ano_Competencia', 
+        columns='Faixa_Etaria_Label', 
+        values='contagem'
+    ).fillna(0) # Preenche anos sem dados com 0
+
+    # Coloca cada coluna no formato de dicionario
+    seriesData = []
+    for faixa in dfPivot.columns:
+        seriesData.append({
+            "name": faixa,
+            "data": dfPivot[faixa].tolist(),
+            "type": "line",
+            "smooth": True
+        })
+
+    dadosGrafico = {
+        "categorias": dfPivot.index.tolist(),
+        "series": seriesData
+    }
+
+    st_echarts(
+        options=CriarOpcoesGrafico("Evolução do Nº de Internações por Faixa Etária", "Nº de Internações", dadosGrafico, 'Linhas'),
+        height=configuracoes[1]
+    )
+
+def main():
+    diretorioAtual = Path(__file__).parent
+    caminhoArquivo = diretorioAtual / 'database' / 'sihsusSJDR.csv'
+
+    dfSihsusSJDR = pd.read_csv(caminhoArquivo, sep=';')
+    dfSihsusSJDR['Valor_Gasto'] = dfSihsusSJDR['Valor_Gasto'].astype(str).str.replace(',', '.').astype(float)
+
+    mapaSexo = {"Masculino": [1], "Feminino": [2, 3]}
+    mapaRaca = {
+        "1": "Branca", "2": "Preta", "3": "Parda",
+        "4": "Amarela", "5": "Indígena", "99": "Sem Informação"
+    }
+    mapaFaixas = {
+        'A': '0-14 anos', 'B': '15-29 anos', 'C': '30-44 anos',
+        'D': '45-59 anos', 'E': '60+ anos'
+    }
+
+    dfSihsusSJDR['Raca_Cor_Label'] = dfSihsusSJDR['Raca_Cor'].astype(str).map(mapaRaca)
+    dfSihsusSJDR['Faixa_Etaria_Label'] = dfSihsusSJDR['Faixa_Etaria'].map(mapaFaixas)
+
+    st.set_page_config(page_title="Dados - SJDR", page_icon="🏥", layout="wide")
     with st.sidebar:
-        st.markdown("<h1 style='text-align: center;'>Configurações</h1>", unsafe_allow_html=True)
+        st.markdown("## Configurações")
+        tamanhoGrafico = st.slider("Altura dos gráficos (px)", 350, 1000, 500)
+        st.markdown("---")
+        st.markdown("### Filtros")
 
-        with st.expander("Aparência dos Gráficos"):
-            tamanho_grafico = st.slider("Altura dos gráficos (pixels)", min_value=350, max_value=1000, value=500)
+        with st.expander("Ano"):
+            anosDisp = sorted(dfSihsusSJDR['Ano_Competencia'].unique())
+            anosSel = st.multiselect(
+                "Selecione o(s) Ano(s)", 
+                options=anosDisp, 
+                default=anosDisp
+            )
+        
+        with st.expander("Faixa Etária"):
+            opcoesFaixaEtaria = ['Sem Filtro'] + list(mapaFaixas.values())
+            filtroFaixaEtaria = st.radio(
+                "Qual filtro você deseja aplicar?",
+                opcoesFaixaEtaria
+            )
 
-    st.markdown("<h1 style='text-align: center;'>Análise de Custos com Internações por Má Nutrição em São João del-Rei</h1>", unsafe_allow_html=True)
-    st.markdown("---")
+        with st.expander("Sexo"):
+            filtroSexo = st.radio(
+                "Qual filtro você deseja aplicar?",
+                ['Sem Filtro', 'Feminino', 'Masculino']
+            )
 
+        with st.expander("Raça/Cor"):
+            opcoesRaca = ['Sem Filtro'] + list(mapaRaca.values())
+            filtroRaca = st.radio(
+                "Qual filtro você deseja aplicar?",
+                opcoesRaca
+            )
 
-    configuracoes_grafico = [None, f"{tamanho_grafico}px"]
+    dfFiltrado = dfSihsusSJDR.copy()
+
+    if filtroFaixaEtaria != "Sem Filtro":
+        dfFiltrado = dfFiltrado[dfFiltrado['Faixa_Etaria_Label'] == filtroFaixaEtaria]
+
+    if filtroSexo != "Sem Filtro":
+        codigos = mapaSexo[filtroSexo]
+        dfFiltrado = dfFiltrado[dfFiltrado['Sexo'].isin(codigos)] 
+
+    if filtroRaca != "Sem Filtro":
+        dfFiltrado = dfFiltrado[dfFiltrado['Raca_Cor_Label'] == filtroRaca]
+
+    configGrafico = [None, f"{tamanhoGrafico}px"]
+
+    st.markdown("# Análise de Dados da Base SIHSUS")
     
-    GraficoCustoAnual(dfsihsusSJDR, configuracoes_grafico)
-    GraficoFaixaEtaria(dfsihsusSJDR, configuracoes_grafico)
-
+    GraficoCustoAnual(dfFiltrado, configGrafico, anosSel)
+    GraficoFaixaEtaria(dfFiltrado, configGrafico)
+    GraficoRaca(dfFiltrado, configGrafico)
+    GraficoTendenciaPorFaixaEtaria(dfFiltrado, configGrafico, anosSel)
 
 if __name__ == '__main__':
     main()
