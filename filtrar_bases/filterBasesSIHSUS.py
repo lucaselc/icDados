@@ -1,4 +1,4 @@
-# Filtra a base de dados do SIHSUS do brasil e extrai o dados de SJDR relacionados a internções dos CIDs estudados
+# Filtra a base de dados do SIHSUS do Brasil e extrai TODOS os dados de SJDR
 import pandas as pd
 import zipfile
 from pathlib import Path
@@ -15,25 +15,10 @@ caminhoZip = diretorioAtual.parent / 'ETLSIH.zip'
 #codMunicipio = 312230
 
 # Sete Lagoas
-#codMunicipio = 316720
-
-# teste sete lagoas
-#codMunicipio = 3167202
-
+# codMunicipio = 316720
 
 # São João Del Rei
 codMunicipio = 316250
-
-
-codigos = [
-    'D50', 'D51', 'D52', 'D53',  
-    'E40', 'E41', 'E42', 'E43', 'E44', 'E45', 'E46', 
-    'E50', 'E51', 'E52', 'E53', 'E54', 'E55', 'E56',
-    'E58', 'E59', 'E60', 'E61', 'E63', 'E64',  
-    'E65', 'E66', 'E67', 'E68',  
-    'K90'  
-]
-
 
 dadosFiltrados = []
 
@@ -49,14 +34,12 @@ with zipfile.ZipFile(caminhoZip, 'r') as zip_ref:
                                  low_memory=False, on_bad_lines='skip')
 
                 df['MUNIC_RES'] = pd.to_numeric(df['MUNIC_RES'], errors='coerce')
-                df['DIAG_PRINC'] = df['DIAG_PRINC'].astype(str).str.strip().str.upper()
 
                 dfSjdr = df[df['MUNIC_RES'] == codMunicipio]
 
-                dfSjdrFiltrado = dfSjdr[dfSjdr['DIAG_PRINC'].str[:3].isin(codigos)]
 
-                if not dfSjdrFiltrado.empty:
-                    dadosFiltrados.append(dfSjdrFiltrado)
+                if not dfSjdr.empty:
+                    dadosFiltrados.append(dfSjdr)
 
         except Exception as e:
             print(f"Erro ao ler {nomeArquivo}: {e}")
@@ -90,17 +73,13 @@ if dadosFiltrados:
     }
     dfFinal.rename(columns=renomear, inplace=True)
 
-    # --- Criar coluna de faixa etária com labels A, B, C, D, E ---
-    bins = [-1, 14, 24, 44, 64, 200]   # limites
+    bins = [-1, 14, 24, 44, 64, 200]
     labels = ['A', 'B', 'C', 'D', 'E']
     dfFinal['Faixa_Etaria'] = pd.cut(dfFinal['Idade'], bins=bins, labels=labels)
 
-
-    # Salvar no CSV
-   
     diretorioAtual = Path(__file__).parent
     pastaDestino = diretorioAtual.parent / 'database'
-    nomeArquivo = 'dadosFiltradosSeteLagoasTeste.csv'
+    nomeArquivo = 'dadosSihsusSJDR.csv'
     nomeArquivoSaida = pastaDestino / nomeArquivo
 
     dfFinal.to_csv(nomeArquivoSaida, sep=';', encoding='utf-8-sig', index=False)
