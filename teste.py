@@ -195,10 +195,10 @@ def main():
 
     with st.sidebar:
         st.markdown("## Filtros de Cidades")
-        check_div = st.checkbox("Divinópolis", value=True)
-        check_ob = st.checkbox("Ouro Branco", value=True)
+        check_div = st.checkbox("Divinópolis", value=False)
+        check_ob = st.checkbox("Ouro Branco", value=False)
         check_sjdr = st.checkbox("São João Del Rei", value=True)
-        check_sl = st.checkbox("Sete Lagoas", value=True)
+        check_sl = st.checkbox("Sete Lagoas", value=False)
         
         st.markdown("---")
         st.markdown("## Configurações de Layout")
@@ -240,4 +240,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
