@@ -1,15 +1,9 @@
 ETLSIH.zip
 DadosAF2018.xlsx
 
-
 script/
 venv/
 env/
 
 __pycache__/
 *.pyc
-
-*.csv
-sisvan/basesSISVAN/*.csv
-
-.DS_Store

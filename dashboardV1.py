@@ -1,8 +1,9 @@
 import streamlit as st
 from streamlit_echarts import st_echarts
-from pathlib import Path
 import pandas as pd
 import numpy as np
+import gdown
+import os
 
 def get_nome_mes(mes):
     try:
@@ -216,44 +217,51 @@ def GraficoEvolucaoMensalSIHSUS(checkBoxs, bases, ano, configuracoes):
     
     exibir_em_grade(opcoes, configuracoes)
 
+
+
+@st.cache_data
+def preparar_dados_drive():
+    """Baixa toda a pasta de bases de dados do Google Drive caso os arquivos não existam localmente."""
+    pasta_destino = "database"
+    os.makedirs(pasta_destino, exist_ok=True)
+    
+    caminho_sisvan = f"{pasta_destino}/sisvanSjdr.csv"
+    
+    if not os.path.exists(caminho_sisvan):
+        url_pasta = 'https://drive.google.com/drive/folders/1eSsElYf0QYCCVaird5R5vSzxBsMC1RNu?usp=sharing'
+        gdown.download_folder(url_pasta, output=pasta_destino, quiet=False, use_cookies=False)
+
 @st.cache_data
 def carregar_dados_sihsus():
-
-    diretorio_base = Path(__file__).parent / 'database'
     arquivos = {
-        "Divinópolis": "dadosFiltradosDivinopolis.csv",
-        "Ouro Branco": "dadosFiltradosOuroBranco.csv",
-        "São João Del Rei": "dadosFiltradosSaoJoaoDelRei.csv",
-        "Sete Lagoas": "dadosFiltradosSeteLagoas.csv"
+        "Divinópolis": "database/dadosFiltradosDivinopolis.csv",
+        "Ouro Branco": "database/dadosFiltradosOuroBranco.csv",
+        "São João Del Rei": "database/dadosFiltradosSaoJoaoDelRei.csv",
+        "Sete Lagoas": "database/dadosFiltradosSeteLagoas.csv"
     }
+    
     dataframes = {}
-    for cidade, arquivo in arquivos.items():
-        try:
-            df = pd.read_csv(diretorio_base / arquivo, sep=';')
+    for cidade, caminho in arquivos.items():
+        if os.path.exists(caminho):
+            df = pd.read_csv(caminho, sep=';')
             if 'Valor_Gasto' in df.columns and df['Valor_Gasto'].dtype == 'object':
                 df['Valor_Gasto'] = df['Valor_Gasto'].astype(str).str.replace(',', '.').astype(float)
             dataframes[cidade] = df
-        except FileNotFoundError:
-            try:
-                df = pd.read_csv(Path(__file__).parent / arquivo, sep=';')
-                if 'Valor_Gasto' in df.columns and df['Valor_Gasto'].dtype == 'object':
-                    df['Valor_Gasto'] = df['Valor_Gasto'].astype(str).str.replace(',', '.').astype(float)
-                dataframes[cidade] = df
-            except:
-                dataframes[cidade] = pd.DataFrame()
+        else:
+            dataframes[cidade] = pd.DataFrame()
+            
     return dataframes
 
-# funções do sisvan
+
 @st.cache_data
 def carregar_dados_sisvan():
-    try:
-        df = pd.read_csv('sisvanSjdr.csv', sep=';', encoding='iso-8859-1')
-    except FileNotFoundError:
-        try:
-            df = pd.read_csv(Path(__file__).parent / 'database' / 'sisvanSjdr.csv', sep=';', encoding='iso-8859-1')
-        except FileNotFoundError:
-            st.error("Arquivo 'sisvanSjdr.csv' não encontrado.")
-            return pd.DataFrame()
+    caminho = "database/sisvanSjdr.csv"
+    
+    if not os.path.exists(caminho):
+        st.error(f"Arquivo '{caminho}' não encontrado.")
+        return pd.DataFrame()
+
+    df = pd.read_csv(caminho, sep=';', encoding='iso-8859-1')
 
     df['ANO_COMPETENCIA'] = df['NU_COMPETENCIA'].astype(str).str[:4].astype(int)
     df['MES_COMPETENCIA'] = df['NU_COMPETENCIA'].astype(str).str[4:].astype(int)
@@ -284,6 +292,7 @@ def carregar_dados_sisvan():
     df = df[df['ESTADO_NUTRICIONAL_LABEL'] != 'Não Informado/Outros']
     
     return df
+
 
 def GraficoEvolucaoNutricional(df, configuracoes):
     st.header("Evolução Temporal Anual (Geral)")
@@ -359,6 +368,8 @@ def GraficoDistribuicaoNutricional(df, ano, configuracoes):
 
 def main():
     st.set_page_config(page_title="Dashboard Dados Sociais", page_icon="📊", layout="wide")
+
+    preparar_dados_drive()
 
     base_selecionada = st.sidebar.selectbox("Selecione a Base de Dados", ["SIHSUS", "SISVAN"])
 
@@ -465,7 +476,6 @@ def main():
 
             st.markdown("<h1 style='text-align: center;'>Análise de Dados do SISVAN - Estado Nutricional</h1>", unsafe_allow_html=True)
             
-            df_sihsus_sjdr = bases_dict_sihsus.get("São João Del Rei", pd.DataFrame())
             GraficoEvolucaoNutricional(df_filtrado, configuracoes)
             st.markdown("---")
             
