@@ -12,3 +12,6 @@ Para executar o Dashboard basta digitar em seu terminal,
 no mesmo local onde as bases de dados e o arquivo Dashboard.py se encontram,
 o seguinte comando: 
     streamlit run Dashboard.py
+
+
+Para reprocessar as bases de dados, para o sihsus, coloque o arquivo zip em icdados, para o sisvan, coloque icdados/sisvan\basesSISVAN
