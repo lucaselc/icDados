@@ -1,17 +1,66 @@
-Bibliotecas Necessárias para execução do Dashboard:
-    Streamlit
-    Streamlit_echarts
-    Pandas
+# Dashboard de Análise de Dados (SIHSUS e SISVAN)
 
-Para instala-las em seu computador, utilize os seguintes comandos:
-    pip install Streamlit
-    pip install Streamlit_echarts
-    pip install Pandas
+Este projeto apresenta um dashboard interativo desenvolvido em **Python usando Streamlit** para análise de dados sociais e de saúde provenientes do **SIHSUS** e **SISVAN**.
 
-Para executar o Dashboard basta digitar em seu terminal, 
-no mesmo local onde as bases de dados e o arquivo Dashboard.py se encontram,
-o seguinte comando: 
-    streamlit run Dashboard.py
+As bases de dados utilizadas estão hospedadas no Google Drive e são baixadas automaticamente na primeira execução.
 
+---
 
-Para reprocessar as bases de dados, para o sihsus, coloque o arquivo zip em icdados, para o sisvan, coloque icdados/sisvan\basesSISVAN
+## Requisitos
+
+Instale as dependências necessárias com:
+
+```bash
+pip install streamlit streamlit-echarts pandas gdown
+```
+Para reprocessar a base do sisvan
+
+```bash
+pip install pyspark
+```
+Ajuste de Performance: Se você for rodar este script em uma máquina com bastante memória RAM ou muitos núcleos de processador, abra o arquivo e ajuste os parâmetros da SparkSession. Aumente o spark.driver.memory e o spark.sql.shuffle.partitions para acelerar drasticamente o tempo de filtragem.
+---
+
+## Como Executar
+
+No terminal, dentro da pasta do projeto, execute:
+
+```bash
+streamlit run dashboardV1.py
+```
+
+---
+
+## Atualização das Bases de Dados
+
+Se precisar reprocessar os dados a partir dos arquivos originais:
+
+### Organização dos arquivos
+
+* **SIHSUS:** coloque o arquivo `.zip` na raiz do projeto (`icDados/`)
+* **SISVAN:** coloque os arquivos `.zip` em:
+
+  ```
+  icDados/sisvan/basesSISVAN/
+  ```
+
+### Processamento
+
+Execute os scripts da pasta:
+
+```
+filtrar_bases/
+```
+
+### Atualização no Dashboard
+
+Após o processamento:
+
+1. Substitua os arquivos antigos no Google Drive pelas novas versões
+2. Execute o dashboard novamente
+
+---
+
+## Observação
+
+O dashboard sempre utilizará automaticamente as versões mais recentes das bases disponíveis no Google Drive.
