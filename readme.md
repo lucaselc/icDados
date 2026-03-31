@@ -18,7 +18,7 @@ Para reprocessar a base do sisvan
 ```bash
 pip install pyspark
 ```
-Ajuste de Performance: Se você for rodar este script em uma máquina com bastante memória RAM ou muitos núcleos de processador, abra o arquivo e ajuste os parâmetros da SparkSession. Aumente o spark.driver.memory e o spark.sql.shuffle.partitions para acelerar drasticamente o tempo de filtragem.
+> **Ajuste de performance:** Se estiver usando uma máquina mais potente, aumente `spark.driver.memory` e `spark.sql.shuffle.partitions` na SparkSession para acelerar o processamento.
 ---
 
 ## Como Executar
@@ -40,9 +40,9 @@ Se precisar reprocessar os dados a partir dos arquivos originais:
 * **SIHSUS:** coloque o arquivo `.zip` na raiz do projeto (`icDados/`)
 * **SISVAN:** coloque os arquivos `.zip` em:
 
-  ```
-  icDados/sisvan/basesSISVAN/
-  ```
+```
+icDados/sisvan/basesSISVAN/
+```
 
 ### Processamento
 
